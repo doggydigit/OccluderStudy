@@ -1,10 +1,52 @@
 close all
 clear all
-disp('Loading Images')
 load Images101
 
+%% Precompute some occluder shapes to ease later computation
+% maxsize = 200;
+% radius = 0:maxrad;
+% nr_rad = maxrad+1;
+% circle_coordinates = cell(nr_rad,1);
+% triup_coordinates = cell(nr_rad,1);
+% trido_coordinates = cell(nr_rad,1);
+% square_coordinates = cell(nr_rad,1);
+% nr_pixels_per_radius = zeros(nr_rad,1);
+% for k = 1:nr_rad
+%     circle_coordinates{k} = {};
+%     r = radius(k);
+%     
+%     %% Compute for circle and square
+%     R = r^2;
+%     for i = -r:r
+%         for j = -r:r
+%             if i^2 + j^2 <= R
+%                 circle_coordinates{k}{end+1} = [i,j];
+%                 nr_pixels_per_radius(k) = nr_pixels_per_radius(k) + 1;
+%             end
+%             square_coordinates{k}{end+1} = [i,j];
+%         end
+%     end
+%     
+%     %% Compute for triangles
+%     h = sqrt(3)*r;
+%     m = ceil(h);
+%     n = 2*r;
+%     tridomask = poly2mask([1, n, r],[1, 1, h],m,n);
+%     triupmask = poly2mask([r, 1, n],[h, 1, 1],m,n);
+%     h = round(h/2);
+%     for i=1:n
+%         for j=1:m
+%             if tridomask(i,j)
+%                 trido_coordinates{k}{end+1} = [i-r,j-h];
+%             end
+%             if triupmask(i,j)
+%                 triup_coordinates{k}{end+1} = [i-r,j-h];
+%             end
+%         end
+%     end
+% end
+
 %% Occlude Images
-disp('Occluding Images')
 radi = linspace(0, 0.45, 10);
 nr_radi = length(radi);
 occluded_images = cell(nr_radi,1);
@@ -13,9 +55,7 @@ occluded_images{1} = images;
 for c = 1:length(images)
     for i = 1:length(images{c})
         imsize = size(images{c}{i});
-        for r=1:nr_radi
-            occluder_masks{r}{c}{i} = true(imsize(1), imsize(2));
-        end
+        occluder_masks{1}{c}{i} = true(imsize(1), imsize(2));
     end
 end
 for r = 2:nr_radi
@@ -85,48 +125,19 @@ for r = 2:nr_radi
         end
     end
 end
-save(strcat('Occluded_C101_poriginal.mat'), 'occluded_images', 'masks', 'classes', 'occluder_masks', 'radi','-v7.3');
 
-% %% Resize images to 227 x 227
-% disp('Resizing Images')
-% dasz = 227;
-% for r=1:length(occluder_masks)
-%     for c=1:length(occluded_images{r})
-%         for i=length(occluded_images{r}{c}):-1:1
-%             sz = size(occluded_images{r}{c}{i});
-%             if max(sz) > dasz
-%                 f = dasz/max(sz);
-%                 occluded_images{r}{c}{i} =  imresize(occluded_images{r}{c}{i}, [round(f*sz(1)), round(f*sz(2))]);
-%                 sz = size(occluded_images{r}{c}{i});
-%             end
-%             ys = ceil((dasz+1 - sz(1))/2);
-%             xs = ceil((dasz+1 - sz(2))/2);
-%             m = repmat(uint8(255), dasz, dasz, 3);
-%             if length(sz) == 3
-%                 m(ys:ys+sz(1)-1, xs:xs+sz(2)-1,:) = occluded_images{r}{c}{i};
-%             else
-%                 m(ys:ys+sz(1)-1, xs:xs+sz(2)-1,:) = repmat(occluded_images{r}{c}{i}, 1, 1, 3);
-%             end
-%             occluded_images{r}{c}{i} = m;
-% 
-%         end
-%     end
-% end
-% 
-% %% Save occluded Images to mat 
-% disp('Saving Images to .mat files')
-% save(strcat('Occluded_C101_p', int2str(dasz), '.mat'), 'occluded_images', 'masks', 'classes', 'occluder_masks', 'radi','-v7.3');
-% % clear all
-% 
-% %% Save images and masks to jpg files
-% %load Occluded_C101
-% disp('Saving Images to .jpg files')
+%% Save occluded Images to mat 
+save('Occluded_C101.mat', 'occluded_images', 'occluder_masks', 'radi','-v7.3');
+% clear all
+
+%% Save images and masks to jpg files
+% load Occluded_C101
 % for c=1:length(occluded_images{1})
 %     for i=1:length(occluded_images{1}{c})
-%         imwrite(masks{c}{i}, strcat('SimpleOccluded', int2str(dasz), '/imagemask_', int2str(c), '_', int2str(i), '.jpg'))
+%         imwrite(masks{c}{i}, strcat('SimpleOccluded/imagemask_', int2str(c), '_', int2str(i), '.jpg'))
 %         for r=1:length(occluded_images)
-%             imwrite(occluded_images{r}{c}{i},strcat('SimpleOccluded', int2str(dasz), '/occluded_image_', int2str(r), '_', int2str(c), '_', int2str(i), '.jpg'))
-%             imwrite(occluder_masks{r}{c}{i},strcat('SimpleOccluded', int2str(dasz), '/occluded_imagemask_', int2str(r), '_', int2str(c), '_', int2str(i), '.jpg'))
+%             imwrite(occluded_images{r}{c}{i},strcat('SimpleOccluded/occluded_image_', int2str(r), '_', int2str(c), '_', int2str(i), '.jpg'))
+%             imwrite(occluded_masks{r}{c}{i},strcat('SimpleOccluded/occluded_imagemask_', int2str(r), '_', int2str(c), '_', int2str(i), '.jpg'))
 %         end     
 %     end
 % end
