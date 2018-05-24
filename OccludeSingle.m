@@ -5,21 +5,21 @@ load Images101
 
 %% Occlude Images
 disp('Occluding Images')
-nr_radi = 10;
-radi = linspace(0, 0.45, nr_radi);
-occluded_images = cell(nr_radi,1);
-occluder_masks = cell(nr_radi,1);
+nr_visi = 10;
+radi = linspace(0, 0.45, nr_visi);
+occluded_images = cell(nr_visi,1);
+occluder_masks = cell(nr_visi,1);
 occluded_images{1} = images;
 nrclasses = length(images);
 for c = 1:nrclasses
     for i = 1:length(images{c})
         imsize = size(images{c}{i});
-        for r=1:nr_radi
+        for r=1:nr_visi
             occluder_masks{r}{c}{i} = true(imsize(1), imsize(2));
         end
     end
 end
-for r = 2:nr_radi
+for r = 2:nr_visi
     %% Initialize/Predefine some stuff
     occluded_images{r} = images;
     occluder_masks{r} = cell(length(images),1);

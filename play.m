@@ -20,11 +20,11 @@
 % end
 
 
-%% 
-% nr_classes = length(images);
+%% get sizes of each class
+% nr_classes = length(occluded_images{1});
 % classsizes = zeros(nr_classes,1);
 % for c=1:nr_classes
-%     classsizes(c) = length(images{c});
+%     classsizes(c) = length(occluded_images{1}{c});
 % end
 
 
@@ -76,27 +76,75 @@
 % end
 
 
-%% Check occlusion area for simple occluder
-nr_radi = length(occluded_images);
-visibility = cell(nr_radi, nr_imgs);
-for r=1:nr_radi
-    n = 0;
-    for c=1:nrclasses
-        for i=1:length(occluded_images{r}{c})
-            n = n + 1;
-            a = ~occluder_masks{r}{c}{i};
-            b = masks{c}{i};
-            d = nnz(a & b) / nnz(b);
-            visibility{r, n} = d;
-%             visibility{r, n} = nnz(~occluder_masks{r}{c}{i} & masks{c}{i}) / nnz(masks{c}{i});
-        end
-    end
-end
-
-
 %% Count number of images
 % nr_imgs = 0;
 % nrclasses = length(occluded_images{1});
 % for c=1:nrclasses
 %     nr_imgs = nr_imgs + length(occluded_images{1}{c});
 % end
+
+
+%% Check occlusion area for simple occluder
+% nr_radi = length(occluded_images);
+% visibility = zeros(nr_radi, nr_imgs);
+% for r=1:nr_radi
+%     n = 0;
+%     for c=1:nrclasses
+%         for i=1:length(occluded_images{r}{c})
+%             n = n + 1;
+% %             a = ~occluder_masks{r}{c}{i};
+% %             b = masks{c}{i};
+% %             d = nnz(a & b) / nnz(b);
+% %             visibility{r, n} = d;
+%             visibility(r, n) = 1 - double(nnz(~occluder_masks{r}{c}{i} & masks{c}{i})) / double(nnz(masks{c}{i}));
+%         end
+%     end
+% end
+
+
+%% Plot alexnet accuracy for occluded and regenerated images
+% plot(0:0.1:0.9, totalaccu)
+% hold on
+% plot(0:0.1:0.9, gen_totalaccu)
+% legend('occluded', 'regenerated')
+% xlabel('occluder size')
+% ylabel('performance')
+
+
+
+%% CHeck alexnet labels 
+clc
+clear all
+close all
+net = alexnet;
+labels = {{'plane', 'warplane', 'airliner'}
+    {'monarch', 'ringlet', 'lycaenid'}
+    {'rock crab', 'Dungeness crab', 'king crab', 'fiddler crab'}
+    {'American lobster', 'crayfish', 'spiny lobster'}
+    {'dalmatian'}
+    {'vase', 'whiskey jug', 'pitcher', 'water jug', 'teapot'} % 6
+    {'grand piano'}
+    {'loggerhead', 'leatherback turtle', 'terrapin'}
+    {'black stork', 'spoonbill', 'hornbill', 'goose', 'white stork', 'vulture', 'dowitcher', 'redshank', 'crane', 'little blue heron', 'magpie', 'coucal', 'limpkin', 'sulphur-crested cockatoo', 'flamingo', 'American egret', 'house finch', 'macaw'}
+    {'wallaby'} % 10
+    {'catamaran', 'yawl', 'schooner', 'trimaran'} % 11
+    {'notebook', 'laptop', 'screen', 'space bar', 'hand-held computer', 'desktop computer', 'iPod'}
+    {'cheetah', 'leopard', 'jaguar'}
+    {'llama'} % 14
+    {'tricycle', 'moped', 'bicycle-built-for-two', 'mountain bike', 'motor scooter'}
+    {'revolver', 'rifle', 'assault rifle'}
+    {'starfish'} % 17
+    {'trilobite', 'chiton'}
+    {'umbrella'} % 19
+    {'analog clock', 'stopwatch', 'digital watch', 'wall clock', 'digital clock'}
+    };
+load SimpleOccluded320/info.mat
+c = 11;
+r = 2;
+for i=1:classsizes(c)
+    img = imresize(imread(strcat('SimpleOccluded320/gen_deepoutshape_', int2str(r), '_', int2str(c), '_', int2str(i), '.jpg')), [227, 227]);
+    l = classify(net,img);
+    if ~any(strcmp(labels{c},char(l(1))))
+       disp(l);
+   end
+end
